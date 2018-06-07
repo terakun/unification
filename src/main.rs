@@ -33,7 +33,7 @@ impl Term {
             },
             Func(ref s, ref v) => {
                 let unified_term: Vec<Term> = v.iter().map(|t| t.unify(u)).collect();
-                Func(s.clone(), unified_term)
+                Func(s.to_string(), unified_term)
             }
         }
     }
@@ -41,7 +41,7 @@ impl Term {
         use Term::*;
         match *self {
             Var(ref s) => s == x,
-            Func(ref s, ref v) => {
+            Func(_, ref v) => {
                 for t in v {
                     if t.appear(x) {
                         return true;
@@ -69,25 +69,24 @@ fn calculate_mgu(constraints: &Constraints) -> Option<Unifier> {
     while !constraints.is_empty() {
         let constraint = constraints.pop_front().unwrap();
         match constraint {
-            (Var(ref x), ref t) | (ref t, Var(ref x)) => {
-                if t.appear(x) {
+            (Var(x), t) | (t, Var(x)) => {
+                if t.appear(&x) {
                     return None;
                 } else {
-                    let u = (x.clone(), t.clone());
+                    let u = (x, t);
                     constraints = unify(&mut constraints, &u);
                     unifier.push(u);
                 }
             }
-            (Func(ref f1, ref v1), Func(ref f2, ref v2)) => {
+            (Func(f1, v1), Func(f2, v2)) => {
                 if f1 == f2 && v1.len() == v2.len() {
-                    for e in v1.iter().zip(v2) {
-                        constraints.push_back((e.0.clone(), e.1.clone()));
+                    for e in v1.iter().map(|t| t.clone()).zip(v2) {
+                        constraints.push_back(e);
                     }
                 } else {
                     return None;
                 }
             }
-            _ => {}
         }
     }
     Some(unifier)
