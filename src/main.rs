@@ -12,17 +12,24 @@ type Constraints = VecDeque<Equality>;
 type VarTerm = (String, Term);
 type Unifier = Vec<VarTerm>;
 
-impl Term {
+impl ToString for Term {
     fn to_string(&self) -> String {
         use Term::*;
         match *self {
             Var(ref s) => s.to_string(),
             Func(ref s, ref v) => {
-                let term_strs: Vec<String> = v.iter().map(|t| t.to_string()).collect();
-                format!("{}({})", s, term_strs.join(","))
+                if v.len() == 0 {
+                    s.to_string()
+                } else {
+                    let term_strs: Vec<String> = v.iter().map(|t| t.to_string()).collect();
+                    format!("{}({})", s, term_strs.join(","))
+                }
             }
         }
     }
+}
+
+impl Term {
     fn unify(&self, u: &VarTerm) -> Self {
         use Term::*;
         match *self {
